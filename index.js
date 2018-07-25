@@ -1,4 +1,11 @@
 // Setup basic express server
+
+const TelegramBot = require ('node-telegram-bot-api');
+
+const telegramToken = "531715110:AAGW7DlE9680PQNRowaG9mzVKJsga_8C6zU";
+
+const bot = new TelegramBot(telegramToken, {polling: true});
+
 var express = require('express');
 var app = express();
 var path = require('path');
@@ -17,16 +24,25 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 var numUsers = 0;
 
-io.on('connection', (socket) => {
+io.on('connection', (socket, response) => {
   var addedUser = false;
 
+  bot.on('message', (msg) => {
+    socket.broadcast.emit('new message', {
+      username: socket.username,
+      message: msg.text,      
+    });
+    console.log('seharusnya mengirimkan ke client: ', msg.text);
+  });
+
   // when the client emits 'new message', this listens and executes
-  socket.on('new message', (data) => {
+  socket.on('new message', (data) => {  
     // we tell the client to execute 'new message'
     socket.broadcast.emit('new message', {
       username: socket.username,
       message: data
-    });
+    });    
+    bot.sendMessage(610864892, data);
   });
 
   // when the client emits 'add user', this listens and executes
@@ -67,6 +83,7 @@ io.on('connection', (socket) => {
       --numUsers;
 
       // echo globally that this client has left
+      //tes
       socket.broadcast.emit('user left', {
         username: socket.username,
         numUsers: numUsers
